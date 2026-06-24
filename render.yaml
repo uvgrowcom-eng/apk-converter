@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: apk-converter
+    runtime: python
+    buildCommand: ./render-build.sh
+    startCommand: gunicorn --timeout 600 --workers 1 app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
