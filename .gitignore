@@ -3,7 +3,6 @@ __pycache__/
 uploads/
 output/
 temp/
-tools/
 java/
 *.log
 .DS_Store
