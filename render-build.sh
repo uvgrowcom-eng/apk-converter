@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -o errexit
 
-echo "📦 Setting up Java + Python..."
+echo "📦 Setting up Java..."
 
 # Java download
 mkdir -p java
@@ -15,27 +15,15 @@ cd ..
 echo "✅ Java installed:"
 java -version
 
-# Tools download
-echo "📥 Downloading Android tools..."
-mkdir -p tools
-cd tools
-
-wget -q -O apktool.jar https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/windows/apktool.bat
-wget -q -O bundletool.jar https://github.com/google/bundletool/releases/download/1.16.1/bundletool-all-1.16.1.jar
-wget -q -O android.jar https://github.com/airwire/android-platforms/raw/main/android-33.jar
-
-echo "  📥 aapt2 (Linux)..."
-wget -q -O aapt2.zip https://dl.google.com/dl/android/maven2/com/android/tools/build/aapt2/7.1.0-7984345/aapt2-7.1.0-7984345-linux.zip
-unzip -q aapt2.zip
-chmod +x aapt2
-rm aapt2.zip
-
-cd ..
-
-echo "✅ Tools ready:"
+# ✅ Tools already in repo - no download needed!
+echo "✅ Tools already present:"
 ls -la tools/
 
+# ✅ Make aapt2 executable
+chmod +x tools/aapt2
+
 # Python dependencies
+echo "📦 Installing Python dependencies..."
 pip3 install --upgrade pip
 pip3 install -r requirements.txt
 
