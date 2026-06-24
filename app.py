@@ -1,4 +1,3 @@
-cat > app.py << 'EOF'
 import os
 import time
 import shutil
@@ -10,7 +9,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
-app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 
 BASE_DIR = Path(__file__).parent
 UPLOADS_DIR = BASE_DIR / "uploads"
@@ -23,9 +22,9 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 try:
     from converter import APKtoAABConverter
     converter = APKtoAABConverter()
-    print("✅ Converter loaded")
+    print("✅ Converter loaded successfully")
 except Exception as e:
-    print(f"❌ Converter failed: {e}")
+    print(f"❌ Converter failed to load: {e}")
     converter = None
 
 @app.route('/')
@@ -53,13 +52,13 @@ def convert():
             return jsonify({'error': 'Converter not initialized'}), 500
         
         if 'apk' not in request.files:
-            return jsonify({'error': 'No APK file'}), 400
+            return jsonify({'error': 'No APK file uploaded'}), 400
         
         file = request.files['apk']
         if not file.filename.endswith('.apk'):
-            return jsonify({'error': 'Invalid file type'}), 400
+            return jsonify({'error': 'Invalid file type. Only APK allowed'}), 400
         
-        # Save APK
+        # ✅ Save APK
         apk_name = f"{int(time.time())}_{secure_filename(file.filename)}"
         apk_path = UPLOADS_DIR / apk_name
         file.save(apk_path)
@@ -69,21 +68,22 @@ def convert():
         target_sdk = int(request.form.get('targetSdk', 33))
         print(f"📊 Min SDK: {min_sdk}, Target SDK: {target_sdk}")
         
-        # Convert
+        # ✅ Convert APK to AAB
         result = converter.convert(apk_path, min_sdk, target_sdk)
         
-        # Clean up
+        # ✅ Clean up uploaded APK
         apk_path.unlink()
         
         if result and result.exists():
             return jsonify({
                 'success': True,
+                'message': 'Conversion completed!',
                 'aab': result.name,
                 'download_url': f'/download/{result.name}',
                 'size': result.stat().st_size
             })
         else:
-            return jsonify({'error': 'Conversion failed'}), 500
+            return jsonify({'error': 'Conversion failed - no output file'}), 500
             
     except Exception as e:
         print(f"❌ Conversion error: {e}")
@@ -101,7 +101,20 @@ def download_file(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/download/apks/<filename>')
+def download_apks(filename):
+    try:
+        # Search in output directory
+        for folder in OUTPUT_DIR.iterdir():
+            if folder.is_dir():
+                file_path = folder / filename
+                if file_path.exists():
+                    return send_file(file_path, as_attachment=True)
+        return jsonify({'error': 'File not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Server starting on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
-EOF
